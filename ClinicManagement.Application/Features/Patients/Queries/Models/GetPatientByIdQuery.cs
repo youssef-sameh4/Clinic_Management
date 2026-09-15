@@ -1,0 +1,21 @@
+﻿using ClinicManagement.Application.Bases;
+using ClinicManagement.Application.Features.Patients.Queries.DTOS;
+using MediatR;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace ClinicManagement.Application.Features.Patients.Queries.Models
+{
+    public class GetPatientByIdQuery:IRequest<Response<GetPatientsByIdDTO>>
+    {
+        public int Id { set; get; }
+
+        public GetPatientByIdQuery(int id)
+        {
+            Id = id;
+        }
+    }
+}

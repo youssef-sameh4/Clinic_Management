@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>net8.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<ItemGroup>
+	  <Compile Remove="Features\Clinic\**" />
+	  <EmbeddedResource Remove="Features\Clinic\**" />
+	  <None Remove="Features\Clinic\**" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\ClinicManagement.Domain\ClinicManagement.Domain.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+
+		<PackageReference Include="AutoMapper" Version="16.2.0" />
+		<PackageReference Include="AWSSDK.Core" Version="4.0.101" />
+		<PackageReference Include="MediatR" Version="14.2.0" />
+
+		<PackageReference Include="FluentValidation" Version="12.0.0" />
+		<PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.0.0" />
+
+	</ItemGroup>
+
+	<ItemGroup>
+	  <Folder Include="Features\Schedules\Queries\Handlers\" />
+	  <Folder Include="Features\Schedules\Queries\Modles\" />
+	  <Folder Include="Features\Schedules\Queries\" />
+	</ItemGroup>
+
+</Project>

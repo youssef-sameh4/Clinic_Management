@@ -1,10 +1,12 @@
 ﻿using AutoMapper;
+using ClinicManagement.Application.BackgroundJobs;
 using ClinicManagement.Application.Bases;
 using ClinicManagement.Application.Bases.ClinicManagement.Application.Bases;
 using ClinicManagement.Application.Features.Appointments.Validators;
 using ClinicManagement.Application.Interfaces;
 using ClinicManagement.Domain.Entities;
 using ClinicManagement.Domain.Enums;
+using Hangfire;
 using MediatR;
 using System;
 using System.Collections.Generic;
@@ -90,6 +92,8 @@ namespace ClinicManagement.Application.Features.Appointments.Command.Payments.Hn
                 await _unitOfWork.SaveChangesAsync();
 
                 await _unitOfWork.CommitTransactionAsync();
+                BackgroundJob.Enqueue<AppointmentEmailJob>(
+    job => job.ExecuteAsync(appointment.Id));
 
                 return Success("Payment completed successfully.");
             }

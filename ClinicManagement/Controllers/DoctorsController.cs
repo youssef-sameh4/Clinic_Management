@@ -1,6 +1,7 @@
 ﻿using ClinicManagement.Application.Features.Doctors.Commands.Models;
 using ClinicManagement.Application.Features.Doctors.Query.Models;
 using MediatR;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -16,6 +17,7 @@ namespace ClinicManagement.API.Controllers
         {
             _mediator = mediator;
         }
+        [Authorize(Roles = "Admin")]
         [HttpGet]
         public async Task<IActionResult> GetAllDoctors()
         {

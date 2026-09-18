@@ -1,4 +1,5 @@
 ﻿using ClinicManagement.Domain.Entities;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -8,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ClinicManagement.Infrastructure.Data
 {
-    public class AppDbContext :DbContext
+    public class AppDbContext : IdentityDbContext<ApplicationUser>
     {
         public DbSet<Doctor> Doctors { set; get; }
         public DbSet<Appointment> Appointments { set; get; }

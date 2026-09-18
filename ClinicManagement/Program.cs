@@ -52,8 +52,14 @@ var jwtSettings = builder.Configuration
     .GetSection("JwtSettings")
     .Get<JwtSettings>();
 
-var key = Encoding.UTF8.GetBytes(jwtSettings!.Key);
+if (jwtSettings == null)
+{
+    throw new Exception(
+        $"JwtSettings section exists: {builder.Configuration.GetSection("JwtSettings").Exists()}"
+    );
+}
 
+var key = Encoding.UTF8.GetBytes(jwtSettings.Key);
 builder.Services
     .AddAuthentication(options =>
     {

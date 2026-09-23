@@ -1,4 +1,4 @@
-using ClinicManagement.Application;
+﻿using ClinicManagement.Application;
 using ClinicManagement.Application.BackgroundJobs;
 using ClinicManagement.Application.Features.Appointments.Command.Payments;
 using ClinicManagement.Application.Features.Appointments.Validators;
@@ -16,61 +16,54 @@ using ClinicManagement.Infrastructure.Data;
 using ClinicManagement.Infrastructure.Email;
 using Hangfire;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using System.Security.Claims;
 using System.Text;
-
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString =
-    builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 
-// =====================================================
-// Database
-// =====================================================
 
-builder.Services.AddDbContext<AppDbContext>(options =>
-    options.UseSqlServer(connectionString));
-
-// =====================================================
-// Identity
-// =====================================================
+if (!string.IsNullOrEmpty(connectionString))
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlServer(connectionString, sqlOptions =>
+            sqlOptions.EnableRetryOnFailure()));
+}
+else
+{
+    builder.Services.AddDbContext<AppDbContext>(options =>
+        options.UseSqlServer("Server=tcp:dummy;Database=dummy;"));
+}
 
 builder.Services
     .AddIdentity<ApplicationUser, IdentityRole>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddDefaultTokenProviders();
 
-// =====================================================
-// JWT Authentication
-// =====================================================
 
 var jwtSettings = builder.Configuration
     .GetSection("JwtSettings")
     .Get<JwtSettings>();
 
-if (jwtSettings == null)
+if (jwtSettings == null || string.IsNullOrWhiteSpace(jwtSettings.Key))
 {
-    throw new Exception(
-        $"JwtSettings section exists: {builder.Configuration.GetSection("JwtSettings").Exists()}"
-    );
+    throw new InvalidOperationException(
+        "JWT settings are missing or invalid. Please configure JwtSettings:Key.");
 }
 
 var key = Encoding.UTF8.GetBytes(jwtSettings.Key);
+
 builder.Services
     .AddAuthentication(options =>
     {
-        options.DefaultAuthenticateScheme =
-            JwtBearerDefaults.AuthenticationScheme;
-
-        options.DefaultChallengeScheme =
-            JwtBearerDefaults.AuthenticationScheme;
-
-        options.DefaultScheme =
-            JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+        options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
     })
     .AddJwtBearer(options =>
     {
@@ -80,9 +73,7 @@ builder.Services
         options.TokenValidationParameters = new TokenValidationParameters
         {
             ValidateIssuerSigningKey = true,
-
-            IssuerSigningKey =
-                new SymmetricSecurityKey(key),
+            IssuerSigningKey = new SymmetricSecurityKey(key),
 
             ValidateIssuer = true,
             ValidIssuer = jwtSettings.Issuer,
@@ -99,6 +90,8 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
@@ -109,22 +102,8 @@ builder.Services.AddCors(options =>
             .AllowAnyMethod();
     });
 });
-// =====================================================
-// Hangfire
-// =====================================================
-
-builder.Services.AddHangfire(config =>
-{
-    config.UseSqlServerStorage(connectionString);
-});
-
-builder.Services.AddHangfireServer();
 
 builder.Services.AddScoped<AppointmentEmailJob>();
-
-// =====================================================
-// Settings
-// =====================================================
 
 builder.Services.Configure<JwtSettings>(
     builder.Configuration.GetSection("JwtSettings"));
@@ -132,17 +111,9 @@ builder.Services.Configure<JwtSettings>(
 builder.Services.Configure<EmailSettings>(
     builder.Configuration.GetSection("EmailSettings"));
 
-// =====================================================
-// Controllers
-// =====================================================
 
 builder.Services.AddControllers();
-
 builder.Services.AddEndpointsApiExplorer();
-
-// =====================================================
-// Swagger + JWT
-// =====================================================
 
 builder.Services.AddSwaggerGen(options =>
 {
@@ -172,17 +143,10 @@ builder.Services.AddSwaggerGen(options =>
     });
 });
 
-// =====================================================
-// Application + Infrastructure Dependencies
-// =====================================================
 
 builder.Services.AddAppDependance();
-
 builder.Services.AddInfrustrctureDependance();
 
-// =====================================================
-// Validators
-// =====================================================
 
 builder.Services.AddScoped<AddDoctorValidator>();
 builder.Services.AddScoped<UpdateDoctorValidator>();
@@ -206,24 +170,26 @@ builder.Services.AddScoped<PaymentValidator>();
 builder.Services.AddScoped<BookAppointmentValidator>();
 builder.Services.AddScoped<UpdateAppointmentValidator>();
 
-// =====================================================
-// Build
-// =====================================================
 
 var app = builder.Build();
 
-// =====================================================
-// HTTP Request Pipeline
-// =====================================================
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders =
+        ForwardedHeaders.XForwardedFor |
+        ForwardedHeaders.XForwardedProto
+});
 
 app.UseSwagger();
-app.UseSwaggerUI();
-//app.UseHttpsRedirection();
+app.UseSwaggerUI(c =>
+{
+    c.SwaggerEndpoint("v1/swagger.json", "Clinic API v1");
+    c.RoutePrefix = "swagger";
+});
 
 app.UseCors("AllowFrontend");
 
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.MapControllers();

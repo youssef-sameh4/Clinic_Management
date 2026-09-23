@@ -4,6 +4,7 @@
     <TargetFramework>net8.0</TargetFramework>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+    <UserSecretsId>4c741e74-6b6d-4abb-a5fe-0a6e3787c05f</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
@@ -22,5 +23,7 @@
     <ProjectReference Include="..\ClinicManagement.Application\ClinicManagement.Application.csproj" />
     <ProjectReference Include="..\ClinicManagement.Infrastructure\ClinicManagement.Infrastructure.csproj" />
   </ItemGroup>
+
+  <ProjectExtensions><VisualStudio><UserProperties appsettings_1development_1json__JsonSchema="https://www.schemastore.org/band-manifest.json" /></VisualStudio></ProjectExtensions>
 
 </Project>
